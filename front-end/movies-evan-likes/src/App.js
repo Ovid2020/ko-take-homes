@@ -29,6 +29,7 @@ export default class App extends Component {
   fetchData() {
     this.fetchReviews()
       .then(reviews => {
+        this.reviews = reviews;
         return this.fetchMovies(reviews);
       })
       .then(movies => {
@@ -82,7 +83,7 @@ export default class App extends Component {
   // problem.
   denormalizeReviewsIntoMovies(movies, reviews) {
     // Storing the movies in an object by the shared key with reviews will allow
-    // matching movies and reviews to operate in O(n) time
+    // matching movies and reviews to operate in O(n) time, as opposed to O(n^2)
     const movieDict = {};
     movies.forEach(movie => {
       movieDict[movie.id] = movie;        
