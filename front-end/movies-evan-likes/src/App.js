@@ -17,8 +17,7 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    this.fetchMovies();
-    this.fetchReviews();
+    this.fetchData();
   }
 
   alphabetizeMovies(movies) {
@@ -27,58 +26,75 @@ export default class App extends Component {
     });
   }
 
-  fetchMovies() {
-    if (!!localStorage.hasOwnProperty('movies')) {
-      this.allMovies = JSON.parse(localStorage.getItem('movies'));
-      this.setState({listViewMovies: this.allMovies});
-    } else {
-      axios.get(`${SERVER_URL}/movies`)
-        .then(res => {
-          this.allMovies = this.alphabetizeMovies(res.data);
-          this.denormalizeReviewsIntoMovies();
-          localStorage.setItem('movies', JSON.stringify(this.allMovies));
-        })
-        .catch(error => {
-          console.error(`Error initializing movie data: ${error}`);
-        });
-    }
+  fetchData() {
+    this.fetchReviews()
+      .then(reviews => {
+        return this.fetchMovies(reviews);
+      })
+      .then(movies => {
+        this.allMovies = movies;
+        this.setState({listViewMovies: movies})
+      })
+      .catch(error => {
+        console.error(`Error fetching data: ${error}`);
+      })
+  }
+
+  fetchMovies(reviews) {
+    return new Promise((resolve, reject) => {
+      if (!!localStorage.hasOwnProperty('movies')) {
+        return resolve(JSON.parse(localStorage.getItem('movies')));
+      } else {
+        axios.get(`${SERVER_URL}/movies`)
+          .then(res => {
+            let movies = this.denormalizeReviewsIntoMovies(res.data, reviews);
+            movies = this.alphabetizeMovies(movies);
+            localStorage.setItem('movies', JSON.stringify(movies))
+            return resolve(movies);
+          })
+          .catch(error => {
+            return reject(error);
+          });
+      }
+    })
   }
 
   fetchReviews() {
-    if (!!localStorage.hasOwnProperty('reviews')) {
-      this.reviews = JSON.parse(localStorage.getItem('reviews'));
-    } else {
-      axios.get(`${SERVER_URL}/reviews`)
-        .then(res => {
-          this.reviews = res.data;
-          this.denormalizeReviewsIntoMovies();
-          localStorage.setItem('reviews', JSON.stringify(res.data));
-        })
-        .catch(error => {
-          console.error(`Error initializing movie data: ${error}`);
-        });
-    }
+    return new Promise((resolve, reject) => {
+      if (!!localStorage.hasOwnProperty('reviews')) {
+        return resolve(JSON.parse(localStorage.getItem('reviews')));
+      } else {
+        axios.get(`${SERVER_URL}/reviews`)
+          .then(res => {
+            localStorage.setItem('reviews', JSON.stringify(res.data));
+            return resolve(res.data);
+          })
+          .catch(error => {
+            return reject(error);
+          });
+      }
+    });
   }
 
   // The reviews and movies won't necessary maintain the same order, which 
-  // would mean you'd have to keep looping through them both to match the 
-  // review to its movie. Storing the reviews in the movie's data removes this
+  // would mean you'd have to keep looping through them to match the review
+  // to its movie. Storing the reviews in the movie's data addresses this
   // problem.
-  denormalizeReviewsIntoMovies() {
-    // This condition means that the denormalization only occurs once both fetches
-    // have completed. I didn't use an asynch chain pattern for the fetches so that 
-    // they could be totally separate, allowing the caches to operate synchronously 
-    // if for some reason one is set, but not the other
-    if (this.allMovies.length > 0 && this.reviews.length > 0) {
-      this.allMovies.forEach(movie => {
-        this.reviews.forEach(review => {
-          if (movie.id === review['movie-id']) {
-            movie.review = review.review;
-          }
-        })
-      });
+  denormalizeReviewsIntoMovies(movies, reviews) {
+    // Storing the movies in an object by the shared key with reviews will allow
+    // matching movies and reviews to operate in O(n) time
+    const movieDict = {};
+    movies.forEach(movie => {
+      movieDict[movie.id] = movie;        
+    });
+    reviews.forEach(review => {
+      movieDict[review['movie-id']].review = review.review;
+    });
+    const movieArray = [];
+    for (let id in movieDict) {
+      movieArray.push(movieDict[id]);
     }
-    this.setState({listViewMovies: this.allMovies});
+    return movieArray;
   }
 
   filterByDecade(decade) {

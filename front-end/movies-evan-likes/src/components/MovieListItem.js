@@ -30,9 +30,16 @@ export default class MovieListItem extends Component {
         <div className={this.state.contentClassName}>
           <div className='movie-info'>
             <img src={this.movie['cover-url']}/>
-            <p>
-              {this.props.review}
-            </p>
+            <div>
+              <p className='movie-info-synopsis'>
+                <label>Synopsis</label>
+                {this.movie.synopsis}
+              </p>
+              <p>
+                <label>Evan's Take</label>
+                "{this.props.review}"
+              </p>
+            </div>
           </div>
         </div>
       </li>

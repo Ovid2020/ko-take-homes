@@ -77,9 +77,28 @@ div.movie-info > img {
   width: 25%;
 }
 
-div.movie-info > p {
-  height: 100%;
+div.movie-info > div {
+  width: 71%;
+  text-align: top;
+}
+
+div.movie-info > div > p {
+  display: block;
+  height: 45%;
   vertical-align: top;
   padding-left: 2%;
-  width: 65%;
 }
+
+div.movie-info > div > p > label {
+  font-style: italic;
+  font-size: .75em;
+  display: block;
+  height: 5%;
+}
+
+p.movie-info-synopsis {
+  max-height: 8em;
+  overflow: scroll;
+  text-overflow: ellipsis;
+}
+
