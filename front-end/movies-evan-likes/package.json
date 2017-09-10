@@ -18,13 +18,21 @@
     "rollup": "^0.48.2",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-json": "^2.3.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
     "snazzy": "^7.0.0",
     "standard": "^10.0.3"
   },
   "dependencies": {
+    "axios": "^0.16.2",
+    "fetch": "^1.1.0",
     "prop-types": "^15.5.10",
     "react": "^15.4.1",
-    "react-dom": "^15.4.1"
+    "react-dom": "^15.4.1",
+    "request": "^2.81.0",
+    "rollup-plugin-commonjs": "^8.2.1",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.1.0",
+    "rollup-plugin-node-resolve": "^3.0.0"
   },
   "babel": {
     "presets": [
