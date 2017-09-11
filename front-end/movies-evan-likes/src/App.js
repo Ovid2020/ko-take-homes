@@ -11,8 +11,7 @@ export default class App extends Component {
     this.allMovies = [];
     this.reviews = [];
     this.state = {
-      listViewMovies: [],
-      reviews: []
+      listViewMovies: []
     };
   }
 
