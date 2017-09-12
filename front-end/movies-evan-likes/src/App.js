@@ -11,7 +11,8 @@ export default class App extends Component {
     this.allMovies = [];
     this.reviews = [];
     this.state = {
-      listViewMovies: []
+      listViewMovies: [],
+      dropdownDecades: []
     };
   }
 
@@ -20,9 +21,21 @@ export default class App extends Component {
   }
 
   alphabetizeMovies(movies) {
-    return movies.sort((a,b) => {
-      return a.title < b.title ? -1 : a.title > b.title ? 1 : 0;
+    return movies.sort((a,b) => a.title < b.title ? -1 : a.title > b.title ? 1 : 0);
+  }
+
+  getDecades(movies) {
+    const decadesDict = {};
+    const decadesArray = [];
+    // Only pushing decades that haven't yet been stored in the object ensures there aren't duplicates in the array
+    movies.forEach(movie => {
+      const decade = parseInt(movie.year / 10) * 10;
+      if (!decadesDict[decade]) {
+        decadesDict[decade] = 1;
+        decadesArray.push(decade);
+      }
     });
+    return decadesArray.sort((a, b) => parseInt(a) > parseInt(b));
   }
 
   fetchData() {
@@ -33,7 +46,9 @@ export default class App extends Component {
       })
       .then(movies => {
         this.allMovies = movies;
-        this.setState({listViewMovies: movies})
+        this.setState({
+          listViewMovies: movies,
+          dropdownDecades: this.getDecades(movies)})
       })
       .catch(error => {
         console.error(`Error fetching data: ${error}`);
@@ -76,20 +91,20 @@ export default class App extends Component {
     });
   }
 
-  // The reviews and movies won't necessary maintain the same order, which 
-  // would mean you'd have to keep looping through them to match the review
-  // to its movie. Storing the reviews in the movie's data addresses this
-  // problem.
+  // The reviews and movies won't necessary maintain the same order, especially 
+  // since the reording via alphabetization of movies is independent of reviews. 
+  // To avoid having to keep searching both movies and review arrays to match them, 
+  // I'm storing the review in the movie to which it belongs.
   denormalizeReviewsIntoMovies(movies, reviews) {
     // Storing the movies in an object by the shared key with reviews will allow
     // matching movies and reviews to operate in O(n) time, as opposed to O(n^2)
+    // 1. Put all movies in an object, keyed by their id
     const movieDict = {};
-    movies.forEach(movie => {
-      movieDict[movie.id] = movie;        
-    });
-    reviews.forEach(review => {
-      movieDict[review['movie-id']].review = review.review;
-    });
+    movies.forEach(movie => movieDict[movie.id] = movie );
+    // 2. Lookup a movie by the review's 'movie-id' (matches the movie's 'movie.id').
+    //    Assign a 'review' field for the movie.
+    reviews.forEach(review => movieDict[review['movie-id']].review = review.review);
+    // 3. Convert the object to an array of movies that now have the reviews in them.
     const movieArray = [];
     for (let id in movieDict) {
       movieArray.push(movieDict[id]);
@@ -112,7 +127,7 @@ export default class App extends Component {
       this.allMovies.forEach(movie => movie.containsSubstring = true);
       this.setState({listViewMovies: this.getOverlapAfterFilters()});
     } else {
-      this.allMovies.forEach(movie => movie.containsSubstring = movie.title.indexOf(substring) > -1);
+      this.allMovies.forEach(movie => movie.containsSubstring = movie.title.toLowerCase().indexOf(substring.toLowerCase()) > -1);
       this.setState({listViewMovies: this.getOverlapAfterFilters()});
     }
   }
@@ -136,6 +151,7 @@ export default class App extends Component {
           </p>
         </div>
         <FilterOptions
+          decades={this.state.dropdownDecades}
           filterByDecade={this.filterByDecade.bind(this)}
           filterBySubstring={this.filterBySubstring.bind(this)} />
         <MovieList movies={this.state.listViewMovies}/>
